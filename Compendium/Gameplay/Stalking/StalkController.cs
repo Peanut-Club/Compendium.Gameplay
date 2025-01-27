@@ -109,7 +109,7 @@ public class StalkController
 			targetPos.y += 0.5f;
             StalkAbility.ServerSetStalk(true);
             StalkAbility.ServerSendRpc(toAll: true);
-			Timing.CallDelayed(3f, delegate
+			Timing.CallDelayed(2.75f, delegate
 			{
 				var room = stalkTarget.Room();
 				if (room is null || room.Name == RoomName.Pocket || room.Zone == FacilityZone.None) {
@@ -117,7 +117,7 @@ public class StalkController
 					return;
                 }
 				StalkAbility.CastRole.FpcModule.ServerOverridePosition(targetPos, Vector3.zero);
-				Timing.CallDelayed(1f, delegate {
+				Timing.CallDelayed(0.75f, delegate {
 					StalkAbility.ServerSetStalk(false);
                     StalkAbility.VigorAmount = 0.25f;
 					StalkAbility.ServerSendRpc(toAll: true);
