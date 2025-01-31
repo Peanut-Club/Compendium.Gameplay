@@ -67,68 +67,70 @@ public class StalkController
 
 	public void ServerStartStalk()
 	{
-		if ((object)Player == null || HubRoleExtensions.RoleId(Player) != RoleTypeId.Scp106)
-		{
-			return;
-		}
-		State = StalkState.None;
-		if (nextUsage != DateTime.MinValue && DateTime.Now < nextUsage)
-		{
-			HubWorldExtensions.Hint(Player, string.Format("<b><color=#ff0000>Nemůžeš použít stalk</color> - <color={0}>Aktivní cooldown ({1}s)</color></b>\"", "#33FFA5", Mathf.RoundToInt((float)(nextUsage - DateTime.Now).TotalSeconds)));
-			return;
-		}
-		if ((double)StalkAbility.VigorAmount < 0.5)
-		{
-			HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Máš moc nízký Vigor!</color></b>");
-			return;
-		}
-		State = StalkState.Choosing;
-		ReferenceHub stalkTarget = GetStalkTarget();
-		if ((object)stalkTarget == null)
-		{
-			nextUsage = DateTime.Now.AddSeconds(NoTargetCooldown);
+		try {
+			if ((object)Player == null || HubRoleExtensions.RoleId(Player) != RoleTypeId.Scp106) {
+				return;
+			}
 			State = StalkState.None;
-			HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Nenalezen žádný cíl.</color></b>\"");
-			return;
-		}
-		if (!Selections.ContainsKey(HubDataExtensions.UserId(stalkTarget)))
-		{
-			Selections[HubDataExtensions.UserId(stalkTarget)] = 1;
-		}
-		else
-		{
-			Selections[HubDataExtensions.UserId(stalkTarget)]++;
-		}
-		if (StalkAbility != null)
-		{
-			nextUsage = DateTime.Now.AddSeconds(StalkCooldown);
-			HubWorldExtensions.Hint(Player, "<b><color=#33FFA5>Teleportuješ se k</color> <color=#ff0000>" + HubDataExtensions.Nick(stalkTarget) + "</color></b>");
-			State = StalkState.Teleporting;
-			float vigorAmount = StalkAbility.VigorAmount;
-			Vector3 targetPos = stalkTarget.transform.position;
-			targetPos.y += 0.5f;
+			if (nextUsage != DateTime.MinValue && DateTime.Now < nextUsage) {
+				HubWorldExtensions.Hint(Player, string.Format("<b><color=#ff0000>Nemůžeš použít stalk</color> - <color={0}>Aktivní cooldown ({1}s)</color></b>\"", "#33FFA5", Mathf.RoundToInt((float)(nextUsage - DateTime.Now).TotalSeconds)));
+				return;
+			}
+			if ((double)StalkAbility.VigorAmount < 0.5) {
+				HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Máš moc nízký Vigor!</color></b>");
+				return;
+			}
+			State = StalkState.Choosing;
+			ReferenceHub stalkTarget = GetStalkTarget();
+			if ((object)stalkTarget == null) {
+				nextUsage = DateTime.Now.AddSeconds(NoTargetCooldown);
+				State = StalkState.None;
+				HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Nenalezen žádný cíl.</color></b>\"");
+				return;
+			}
+			if (!Selections.ContainsKey(HubDataExtensions.UserId(stalkTarget))) {
+				Selections[HubDataExtensions.UserId(stalkTarget)] = 1;
+			} else {
+				Selections[HubDataExtensions.UserId(stalkTarget)]++;
+			}
+			if (StalkAbility == null) {
+				State = StalkState.None;
+				HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Chyba při používání Ability!</color></b>\"");
+				return;
+			}
+
+            nextUsage = DateTime.Now.AddSeconds(StalkCooldown);
+            HubWorldExtensions.Hint(Player, "<b><color=#33FFA5>Teleportuješ se k</color> <color=#ff0000>" + HubDataExtensions.Nick(stalkTarget) + "</color></b>");
+            State = StalkState.Teleporting;
+            float vigorAmount = StalkAbility.VigorAmount;
+            Vector3 targetPos = stalkTarget.transform.position;
+            targetPos.y += 0.5f;
             StalkAbility.ServerSetStalk(true);
             StalkAbility.ServerSendRpc(toAll: true);
-			Timing.CallDelayed(2.75f, delegate
-			{
-				var room = stalkTarget.Room();
-				if (room is null || room.Name == RoomName.Pocket || room.Zone == FacilityZone.None) {
+            Timing.CallDelayed(2.5f, delegate {
+                var room = stalkTarget.Room();
+                if (room is null || room.Name == RoomName.Pocket || room.Zone == FacilityZone.None) {
                     HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Hráč je na špatné pozici!</color></b>\"");
-					return;
+                    State = StalkState.None;
+                    return;
                 }
-				StalkAbility.CastRole.FpcModule.ServerOverridePosition(targetPos, Vector3.zero);
-				Timing.CallDelayed(0.75f, delegate {
-					StalkAbility.ServerSetStalk(false);
+                StalkAbility.CastRole.FpcModule.ServerOverridePosition(targetPos, Vector3.zero);
+                Timing.CallDelayed(0.75f, delegate {
+                    StalkAbility.ServerSetStalk(false);
                     StalkAbility.VigorAmount = 0.25f;
-					StalkAbility.ServerSendRpc(toAll: true);
-					State = StalkState.None;
-				});
-			});
-		}
-		else
-		{
+                    StalkAbility.ServerSendRpc(toAll: true);
+                    State = StalkState.None;
+                });
+            });
+
+			Timing.CallDelayed(4f, delegate {
+				if (State == StalkState.Teleporting) {
+	                State = StalkState.None;
+				}
+            });
+        } catch (Exception e) {
+			Plugin.Error(e.ToString());
 			State = StalkState.None;
-			HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Chyba při používání Ability!</color></b>\"");
 		}
 	}
 
