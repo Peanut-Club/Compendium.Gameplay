@@ -107,7 +107,7 @@ public class StalkController
             targetPos.y += 0.5f;
             StalkAbility.ServerSetStalk(true);
             StalkAbility.ServerSendRpc(toAll: true);
-            Timing.CallDelayed(2.5f, delegate {
+            Timing.CallDelayed(3.25f, delegate {
                 var room = stalkTarget.Room();
                 if (room is null || room.Name == RoomName.Pocket || room.Zone == FacilityZone.None) {
                     HubWorldExtensions.Hint(Player, "<b><color=#ff0000>Nemůžeš použít stalk</color> - <color=#33FFA5>Hráč je na špatné pozici!</color></b>\"");
@@ -115,7 +115,7 @@ public class StalkController
                     return;
                 }
                 StalkAbility.CastRole.FpcModule.ServerOverridePosition(targetPos, Vector3.zero);
-                Timing.CallDelayed(0.75f, delegate {
+                Timing.CallDelayed(0.25f, delegate {
                     StalkAbility.ServerSetStalk(false);
                     StalkAbility.VigorAmount = 0.25f;
                     StalkAbility.ServerSendRpc(toAll: true);
@@ -123,7 +123,7 @@ public class StalkController
                 });
             });
 
-			Timing.CallDelayed(4f, delegate {
+			Timing.CallDelayed(4.1f, delegate {
 				if (State == StalkState.Teleporting) {
 	                State = StalkState.None;
 				}

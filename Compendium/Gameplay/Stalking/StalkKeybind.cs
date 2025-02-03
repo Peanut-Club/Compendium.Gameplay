@@ -12,10 +12,12 @@ public class StalkKeybind : IInputHandler
 	public bool IsChangeable { get; } = true;
 
 
-	public string Id { get; } = "stalk";
+    public string Id { get; } = "stalk";
+
+    public string Label { get; } = "SCP - SCP106 - Stalk";
 
 
-	public void OnPressed(ReferenceHub player)
+    public void OnPressed(ReferenceHub player)
 	{
 		if (StalkController.Controllers.TryGetValue(player, out var value))
 		{
